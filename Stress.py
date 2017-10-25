@@ -2,6 +2,7 @@
 import random
 import os
 import thread
+import sys
 
 class Stresser(object):
     """
@@ -69,7 +70,7 @@ class Grep(Stresser):
 
 class Concat(Stresser):
     def __init__(self):
-        super(Sort, self).__init__()
+        super(Concat, self).__init__()
         
     def doStress(self, intensity=1):
         '''Stresses the machine'''
@@ -154,8 +155,15 @@ class KMeansCluster(Stresser):
         kmeans.fit(X)
 
 
+loads = [CreateFile(), WordCount(), Sort(), Grep(), Concat(), NaiveBayesClassifier(), NNClassifier(), NNRegressor(), KMeans()]
+num_loads = len(loads)
 if __name__ == '__main__':
-    # b = Grep()
-    # b.doStress()
-    b = KMeansCluster()
-    b.doStress(intensity=2)    
+    load = int(sys.argv[1])
+    intensity = int(sys.argv[2])
+    if load >= num_loads or intensity > 5:
+        print "Error in input"
+        print "Usage, python Stress.py <load_num> <intensity>"
+    else:
+        loads[load].doStress(intensity)
+
+
