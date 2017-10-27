@@ -35,11 +35,6 @@ class CreateFile(Stresser):
                 f.write(str(i))
         return filename
 
-# Large files for multiple tasks
-files = []
-for intensity in xrange(5):
-    files.append(CreateFile().doStress(intensity+1))
-
 ################# MICRO LOADS ##################################
 class WordCount(Stresser):
     """Creates big file and does wc on it"""
@@ -50,7 +45,7 @@ class WordCount(Stresser):
 
     def doStress(self, intensity=1):
         '''Stresses the machine'''
-        print os.system('wc {}'.format(files[intensity-1]))
+        print os.system('wc {}'.format(CreateFile().doStress(intensity+1)))
 
 class Sort(Stresser):
     def __init__(self):
@@ -58,7 +53,7 @@ class Sort(Stresser):
         
     def doStress(self, intensity=1):
         '''Stresses the machine'''
-        print os.system('sort {}'.format(files[intensity-1]))
+        print os.system('sort {}'.format(CreateFile().doStress(intensity+1)))
 
 class Grep(Stresser):
     def __init__(self):
@@ -66,7 +61,7 @@ class Grep(Stresser):
         
     def doStress(self, intensity=1):
         '''Stresses the machine'''
-        print os.system('cat {} | grep 1'.format(files[intensity-1]))
+        print os.system('cat {} | grep 1'.format(CreateFile().doStress(intensity+1)))
 
 class Concat(Stresser):
     def __init__(self):
@@ -74,7 +69,7 @@ class Concat(Stresser):
         
     def doStress(self, intensity=1):
         '''Stresses the machine'''
-        print os.system('cat {}'.format(files[0:intensity]))
+        print os.system('cat {}'.format(CreateFile().doStress(intensity+1)))
 #################################################################
 
 ############## ML Loads #########################################
@@ -94,16 +89,7 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 
-n_samples = 100
-regress_datasets = [make_regression(n_samples=n_samples, n_features=100*(intensity+1), n_informative=70*(intensity+1),
-    n_targets=1, bias=0.0, effective_rank=None, tail_strength=0.5, noise=0.01, shuffle=True, coef=False,
-    random_state=None) for intensity in xrange(5)]
-
-classification_datasets = [make_classification(n_samples=n_samples, 
-            n_features=100*(intensity+1), n_informative=50*(intensity+1), 
-            n_redundant=30, n_repeated=0, n_classes=5, n_clusters_per_class=4,
-            weights=None, flip_y=0.01, class_sep=1.0, hypercube=True, 
-            shift=0.0, scale=1.0, shuffle=True, random_state=None) for intensity in xrange(5)]
+n_samples_factor = 100
 
 class NaiveBayesClassifier(Stresser):
     def __init__(self):
@@ -111,7 +97,11 @@ class NaiveBayesClassifier(Stresser):
         
     def doStress(self, intensity=1):
         '''Stresses the machine'''
-        X,Y,= classification_datasets[intensity-1]
+        X,Y,= make_classification(n_samples=intensity*n_samples_factor, 
+            n_features=100*(intensity), n_informative=50*(intensity), 
+            n_redundant=30, n_repeated=0, n_classes=5, n_clusters_per_class=4,
+            weights=None, flip_y=0.01, class_sep=1.0, hypercube=True, 
+            shift=0.0, scale=1.0, shuffle=True, random_state=None)
         gnb = GaussianNB()
         print gnb.fit(X, Y)
 
@@ -121,7 +111,11 @@ class NNClassifier(Stresser):
 
     def doStress(self, intensity=1):
         '''Stresses the machine'''
-        X,Y,= classification_datasets[intensity-1]
+        X,Y,= make_classification(n_samples=intensity*n_samples_factor, 
+            n_features=100*(intensity), n_informative=50*(intensity), 
+            n_redundant=30, n_repeated=0, n_classes=5, n_clusters_per_class=4,
+            weights=None, flip_y=0.01, class_sep=1.0, hypercube=True, 
+            shift=0.0, scale=1.0, shuffle=True, random_state=None)
         hidden_layer_sizes = tuple([100 for i in xrange(intensity)] )
         clf = MLPClassifier(hidden_layer_sizes = hidden_layer_sizes,verbose=True,max_iter=100,early_stopping=True,
             tol=0.000001)
@@ -133,7 +127,9 @@ class NNRegressor(Stresser):
 
     def doStress(self, intensity=1):
         '''Stresses the machine'''
-        X,Y,= regress_datasets[intensity-1]
+        X,Y,= make_regression(n_samples=intensity*n_samples_factor, n_features=100*(intensity), n_informative=70*(intensity),
+    n_targets=1, bias=0.0, effective_rank=None, tail_strength=0.5, noise=0.01, shuffle=True, coef=False,
+    random_state=None)
         print X.shape
         print Y.shape
         hidden_layer_sizes = tuple([100 for i in xrange(intensity)] )
@@ -147,7 +143,9 @@ class KMeansCluster(Stresser):
         
     def doStress(self, intensity=1):
         '''Stresses the machine'''
-        X,Y,= regress_datasets[intensity-1]
+        X,Y,= make_regression(n_samples=intensity*n_samples_factor, n_features=100*(intensity), n_informative=70*(intensity),
+                n_targets=1, bias=0.0, effective_rank=None, tail_strength=0.5, noise=0.01, shuffle=True, coef=False,
+                random_state=None)
         kmeans = KMeans(n_clusters=8*intensity, init='k-means++', n_init=10,
                  max_iter=300, tol=1e-4, precompute_distances='auto',
                  verbose=1, random_state=None, copy_x=True,
